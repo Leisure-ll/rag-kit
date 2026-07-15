@@ -14,6 +14,7 @@
 - Hybrid Search：Hashing Embedding 向量召回 + BM25 关键词召回
 - 可选 `sentence-transformers` 语义向量模型
 - FastAPI 接口：健康检查、导入、问答、SSE 流式问答
+- Web Console：导入、问答、流式输出、召回分数、文档/chunk 查看
 - CLI：命令行导入和问答
 
 ## Docker Demo
@@ -27,6 +28,7 @@ docker compose up -d minio
 
 服务地址：
 
+- Web Console: http://127.0.0.1:8000
 - API Swagger: http://127.0.0.1:8000/docs
 - API Health: http://127.0.0.1:8000/health
 - MinIO Console: http://127.0.0.1:9001
@@ -57,6 +59,16 @@ curl.exe -X POST http://127.0.0.1:8000/ingest -F "path=sample_docs"
 
 ```powershell
 curl.exe http://127.0.0.1:8000/stats
+```
+
+查看文档、chunk 和检索打分：
+
+```powershell
+curl.exe http://127.0.0.1:8000/documents
+curl.exe http://127.0.0.1:8000/chunks
+curl.exe -X POST http://127.0.0.1:8000/search `
+  -H "Content-Type: application/json" `
+  -d "{\"question\":\"RAG Kit 的知识库数据分别存在哪里？\",\"top_k\":5}"
 ```
 
 普通问答：

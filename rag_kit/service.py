@@ -124,6 +124,57 @@ class RAGService:
         async for token in self.chat_client.stream(question, hits):
             yield token
 
+    def documents(self, limit: int = 50) -> List[Dict]:
+        if self.storage_backend == "sqlite" and self.sqlite_store:
+            return self.sqlite_store.list_documents(limit)
+        if self.storage_backend == "external" and self.metadata_store:
+            return []
+        sources = {}
+        for chunk in self.vector_store.chunks:
+            source = chunk.metadata.get("source", "")
+            if source and source not in sources:
+                sources[source] = {
+                    "id": chunk.metadata.get("document_id"),
+                    "source": source,
+                    "object_key": None,
+                    "meta_json": "{}",
+                }
+        return list(sources.values())[:limit]
+
+    def chunks(self, limit: int = 20) -> List[Dict]:
+        if self.storage_backend == "sqlite" and self.sqlite_store:
+            return self.sqlite_store.list_chunks(limit)
+        if self.storage_backend == "external" and self.metadata_store:
+            return self.metadata_store.list_chunks(limit)
+        return [
+            {
+                "id": chunk.id,
+                "document_id": chunk.metadata.get("document_id"),
+                "source": chunk.metadata.get("source"),
+                "page": chunk.metadata.get("page"),
+                "chunk_index": chunk.metadata.get("chunk_index"),
+                "text": chunk.text,
+                "meta_json": "{}",
+            }
+            for chunk in self.vector_store.chunks[:limit]
+        ]
+
+    def search_debug(self, question: str, top_k: Optional[int] = None) -> List[Dict]:
+        hits = self.search(question, top_k)
+        return [
+            {
+                "id": hit.chunk.id,
+                "score": round(hit.score, 4),
+                "vector_score": round(hit.vector_score, 4),
+                "bm25_score": round(hit.bm25_score, 4),
+                "source": hit.chunk.metadata.get("source"),
+                "page": hit.chunk.metadata.get("page"),
+                "chunk_index": hit.chunk.metadata.get("chunk_index"),
+                "preview": hit.chunk.text[:360],
+            }
+            for hit in hits
+        ]
+
     def stats(self) -> Dict:
         if self.storage_backend == "sqlite":
             return {

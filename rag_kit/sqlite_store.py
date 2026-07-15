@@ -93,6 +93,31 @@ class SQLiteKnowledgeStore:
             row = connection.execute("SELECT COUNT(*) FROM chunks").fetchone()
         return int(row[0])
 
+    def list_documents(self, limit: int = 50) -> List[dict]:
+        self.init_schema()
+        with sqlite3.connect(str(self.database_path)) as connection:
+            connection.row_factory = sqlite3.Row
+            rows = connection.execute(
+                "SELECT id, source, object_key, meta_json FROM documents ORDER BY source LIMIT ?",
+                (limit,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def list_chunks(self, limit: int = 20) -> List[dict]:
+        self.init_schema()
+        with sqlite3.connect(str(self.database_path)) as connection:
+            connection.row_factory = sqlite3.Row
+            rows = connection.execute(
+                """
+                SELECT id, document_id, source, page, chunk_index, text, meta_json
+                FROM chunks
+                ORDER BY source, chunk_index
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
     def search(self, query: str, top_k: int, vector_weight: float, bm25_weight: float) -> List[SearchHit]:
         records = self._load_chunks()
         if not records:
@@ -138,4 +163,3 @@ def _sqlite_path(database_url: str) -> Path:
     raw_path = database_url[len(prefix) :]
     path = Path(raw_path)
     return path if path.is_absolute() else Path.cwd() / path
-

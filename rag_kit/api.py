@@ -4,7 +4,8 @@ from tempfile import NamedTemporaryFile
 from typing import Dict, List
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from rag_kit.models import IngestResponse, QueryRequest, QueryResponse, Source
 from rag_kit.service import RAGService
@@ -12,10 +13,17 @@ from rag_kit.service import RAGService
 
 app = FastAPI(title="RAG Kit", version="0.1.0")
 _service = RAGService()
+_static_dir = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
 
 def get_service() -> RAGService:
     return _service
+
+
+@app.get("/", include_in_schema=False)
+def index() -> FileResponse:
+    return FileResponse(_static_dir / "index.html")
 
 
 @app.get("/health")
@@ -28,6 +36,16 @@ def health() -> Dict:
 @app.get("/stats")
 def stats(service: RAGService = Depends(get_service)) -> Dict:
     return service.stats()
+
+
+@app.get("/documents")
+def documents(limit: int = 50, service: RAGService = Depends(get_service)) -> List[Dict]:
+    return service.documents(limit)
+
+
+@app.get("/chunks")
+def chunks(limit: int = 20, service: RAGService = Depends(get_service)) -> List[Dict]:
+    return service.chunks(limit)
 
 
 @app.post("/ingest", response_model=IngestResponse)
@@ -54,6 +72,11 @@ async def ingest_file(file: UploadFile = File(...), service: RAGService = Depend
 @app.post("/query", response_model=QueryResponse)
 async def query(request: QueryRequest, service: RAGService = Depends(get_service)) -> QueryResponse:
     return await service.ask(request.question, request.top_k)
+
+
+@app.post("/search")
+def search(request: QueryRequest, service: RAGService = Depends(get_service)) -> List[Dict]:
+    return service.search_debug(request.question, request.top_k)
 
 
 @app.post("/query/stream")

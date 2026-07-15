@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RAG Kit Console</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>RAG Kit Console</h1>
+          <p id="statusLine">Loading storage status...</p>
+        </div>
+        <div class="actions">
+          <button id="refreshBtn" type="button">Refresh</button>
+          <a class="button secondary" href="/docs" target="_blank" rel="noreferrer">Swagger</a>
+        </div>
+      </header>
+
+      <section class="grid">
+        <aside class="panel">
+          <h2>Storage</h2>
+          <dl id="stats" class="stats"></dl>
+
+          <h2>Ingest</h2>
+          <form id="pathForm" class="stack">
+            <label>
+              Path
+              <input name="path" value="sample_docs" />
+            </label>
+            <button type="submit">Ingest Path</button>
+          </form>
+
+          <form id="fileForm" class="stack">
+            <label>
+              File
+              <input name="file" type="file" />
+            </label>
+            <button type="submit">Upload File</button>
+          </form>
+          <pre id="ingestResult" class="output compact"></pre>
+        </aside>
+
+        <section class="panel workspace">
+          <h2>Ask</h2>
+          <form id="queryForm" class="query">
+            <textarea name="question" rows="4">RAG Kit 的知识库数据分别存在哪里？</textarea>
+            <div class="queryActions">
+              <label>
+                Top K
+                <input name="topK" type="number" value="5" min="1" max="20" />
+              </label>
+              <button type="submit">Ask</button>
+              <button id="streamBtn" type="button" class="secondary">Stream</button>
+            </div>
+          </form>
+
+          <h3>Answer</h3>
+          <pre id="answer" class="output"></pre>
+
+          <h3>Retrieval Debug</h3>
+          <div id="debugHits" class="hits"></div>
+        </section>
+      </section>
+
+      <section class="grid lower">
+        <section class="panel">
+          <h2>Documents</h2>
+          <div id="documents" class="table"></div>
+        </section>
+        <section class="panel">
+          <h2>Chunks</h2>
+          <div id="chunks" class="chunks"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
+
