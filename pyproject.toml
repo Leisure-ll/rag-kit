@@ -1,0 +1,11 @@
+[project]
+name = "rag-kit"
+version = "0.1.0"
+description = "A runnable Python hybrid RAG knowledge base with FastAPI, BM25, vector retrieval and SSE streaming."
+requires-python = ">=3.8"
+
+[tool.ruff]
+line-length = 120
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

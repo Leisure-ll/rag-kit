@@ -1,0 +1,4 @@
+# Optional local semantic embedding model.
+# Install this if you want stronger semantic recall than the default lightweight Hashing embedding.
+sentence-transformers>=3.0.0
+
