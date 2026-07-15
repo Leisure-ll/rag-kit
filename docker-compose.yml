@@ -1,0 +1,68 @@
+services:
+  api:
+    build: .
+    container_name: rag-kit-api
+    profiles: ["api"]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      RAG_STORAGE_BACKEND: external
+      RAG_DATABASE_URL: sqlite:////app/data/rag_kit.db
+      RAG_ELASTICSEARCH_URL: http://elasticsearch:9200
+      RAG_ELASTICSEARCH_INDEX: rag_chunks
+      RAG_MINIO_ENDPOINT: minio:9000
+      RAG_MINIO_ACCESS_KEY: rag_minio
+      RAG_MINIO_SECRET_KEY: rag_minio_password
+      RAG_MINIO_BUCKET: rag-documents
+      RAG_MINIO_SECURE: "false"
+      RAG_LLM_API_KEY: ${RAG_LLM_API_KEY:-}
+      RAG_LLM_BASE_URL: ${RAG_LLM_BASE_URL:-https://api.deepseek.com}
+      RAG_LLM_MODEL: ${RAG_LLM_MODEL:-deepseek-chat}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./sample_docs:/app/sample_docs:ro
+      - rag_data:/app/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.1
+    container_name: rag-kit-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=1s || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-07-16T23-46-41Z
+    container_name: rag-kit-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: rag_minio
+      MINIO_ROOT_PASSWORD: rag_minio_password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  rag_data:
+  es_data:
+  minio_data:

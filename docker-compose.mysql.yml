@@ -1,0 +1,29 @@
+services:
+  api:
+    environment:
+      RAG_DATABASE_URL: mysql+pymysql://rag:rag_password@mysql:3306/rag_kit?charset=utf8mb4
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    container_name: rag-kit-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: rag_kit
+      MYSQL_USER: rag
+      MYSQL_PASSWORD: rag_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-urag", "-prag_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mysql_data:
+

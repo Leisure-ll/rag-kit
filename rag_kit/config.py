@@ -15,6 +15,16 @@ class Settings(BaseSettings):
     bm25_weight: float = 0.35
     embedding_backend: str = "hashing"
     sentence_transformer_model: str = "BAAI/bge-small-zh-v1.5"
+    storage_backend: str = "local"
+
+    database_url: str = "sqlite:///data/rag_kit.db"
+    elasticsearch_url: str = "http://localhost:9200"
+    elasticsearch_index: str = "rag_chunks"
+    minio_endpoint: str = "localhost:9000"
+    minio_access_key: str = "rag_minio"
+    minio_secret_key: str = "rag_minio_password"
+    minio_bucket: str = "rag-documents"
+    minio_secure: bool = False
 
     llm_api_key: Optional[str] = None
     llm_base_url: str = "https://api.deepseek.com"

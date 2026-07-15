@@ -20,11 +20,14 @@ def get_service() -> RAGService:
 
 @app.get("/health")
 def health() -> Dict:
-    return {
-        "status": "ok",
-        "chunks": len(_service.vector_store.chunks),
-        "llm_enabled": _service.chat_client.enabled,
-    }
+    stats = _service.stats()
+    stats["status"] = "ok"
+    return stats
+
+
+@app.get("/stats")
+def stats(service: RAGService = Depends(get_service)) -> Dict:
+    return service.stats()
 
 
 @app.post("/ingest", response_model=IngestResponse)
