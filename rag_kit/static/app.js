@@ -51,6 +51,26 @@ function renderChunks(chunks) {
     : "<p>No chunks.</p>";
 }
 
+function renderTraces(traces) {
+  $("#traces").innerHTML = traces.length
+    ? traces
+        .map(
+          (trace) => `
+          <article class="row">
+            <div>
+              <span class="metric">trace <strong>${escapeHtml(trace.id)}</strong></span>
+              <span class="metric">latency <strong>${Number(trace.latency_ms).toFixed(1)} ms</strong></span>
+              <span class="metric">top_k <strong>${trace.top_k}</strong></span>
+            </div>
+            <div class="preview">${escapeHtml(trace.question)}</div>
+            <div class="path">${escapeHtml(trace.created_at)} · ${escapeHtml(trace.storage_backend)}</div>
+          </article>
+        `,
+        )
+        .join("")
+    : "<p>No traces.</p>";
+}
+
 function renderDebug(hits) {
   $("#debugHits").innerHTML = hits.length
     ? hits
@@ -73,14 +93,16 @@ function renderDebug(hits) {
 }
 
 async function refresh() {
-  const [stats, documents, chunks] = await Promise.all([
+  const [stats, documents, chunks, traces] = await Promise.all([
     requestJson("/stats"),
     requestJson("/documents"),
     requestJson("/chunks?limit=10"),
+    requestJson("/traces?limit=8"),
   ]);
   renderStats(stats);
   renderDocuments(documents);
   renderChunks(chunks);
+  renderTraces(traces);
 }
 
 async function ingestPath(event) {
@@ -111,7 +133,9 @@ async function ask(event) {
     requestJson("/search", jsonPost(payload)),
   ]);
   $("#answer").textContent = answer.answer;
+  $("#traceLine").textContent = answer.trace_id ? `trace_id: ${answer.trace_id}` : "";
   renderDebug(hits);
+  await refresh();
 }
 
 async function streamAnswer() {
@@ -120,6 +144,7 @@ async function streamAnswer() {
   renderDebug(await requestJson("/search", jsonPost(payload)));
 
   const response = await fetch("/query/stream", jsonPost(payload));
+  $("#traceLine").textContent = "streaming response";
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
@@ -172,4 +197,3 @@ $("#streamBtn").addEventListener("click", streamAnswer);
 refresh().catch((error) => {
   $("#statusLine").textContent = error.message;
 });
-

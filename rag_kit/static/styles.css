@@ -83,6 +83,10 @@ dd {
   margin-top: 16px;
 }
 
+.tracesPanel {
+  margin-top: 16px;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -230,6 +234,13 @@ button:hover,
   overflow-wrap: anywhere;
 }
 
+.traceLine {
+  min-height: 22px;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
 @media (max-width: 900px) {
   .topbar,
   .grid,
@@ -241,4 +252,3 @@ button:hover,
     align-items: flex-start;
   }
 }
-

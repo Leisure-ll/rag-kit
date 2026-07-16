@@ -1,4 +1,5 @@
 from pathlib import Path
+from time import perf_counter
 from typing import AsyncIterator, Dict, List, Optional
 
 from rag_kit.config import Settings, get_settings
@@ -12,6 +13,7 @@ from rag_kit.object_store import ObjectStore
 from rag_kit.retriever import HybridRetriever
 from rag_kit.sqlite_store import SQLiteKnowledgeStore
 from rag_kit.splitter import RecursiveTextSplitter
+from rag_kit.trace_store import TraceStore
 from rag_kit.vector_store import LocalVectorStore
 
 
@@ -57,6 +59,7 @@ class RAGService:
             model=self.settings.llm_model,
             timeout=self.settings.llm_timeout,
         )
+        self.trace_store = TraceStore(self.settings.database_url)
 
     def ingest(self, path: Path) -> IngestResponse:
         documents = load_path(path)
@@ -115,9 +118,20 @@ class RAGService:
         return self.retriever.search(question, top_k=top_k or self.settings.top_k)
 
     async def ask(self, question: str, top_k: Optional[int] = None) -> QueryResponse:
+        started = perf_counter()
+        selected_top_k = top_k or self.settings.top_k
         hits = self.search(question, top_k)
         answer = await self.chat_client.complete(question, hits)
-        return QueryResponse(answer=answer, sources=_to_sources(hits))
+        latency_ms = (perf_counter() - started) * 1000
+        trace_id = self.trace_store.record(
+            question=question,
+            answer=answer,
+            top_k=selected_top_k,
+            latency_ms=latency_ms,
+            storage_backend=self.storage_backend,
+            hits=hits,
+        )
+        return QueryResponse(answer=answer, sources=_to_sources(hits), trace_id=trace_id)
 
     async def ask_stream(self, question: str, top_k: Optional[int] = None) -> AsyncIterator[str]:
         hits = self.search(question, top_k)
@@ -174,6 +188,12 @@ class RAGService:
             }
             for hit in hits
         ]
+
+    def traces(self, limit: int = 20) -> List[Dict]:
+        return self.trace_store.list_traces(limit)
+
+    def trace(self, trace_id: str) -> Optional[Dict]:
+        return self.trace_store.get_trace(trace_id)
 
     def stats(self) -> Dict:
         if self.storage_backend == "sqlite":

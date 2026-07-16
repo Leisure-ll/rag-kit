@@ -48,6 +48,19 @@ def chunks(limit: int = 20, service: RAGService = Depends(get_service)) -> List[
     return service.chunks(limit)
 
 
+@app.get("/traces")
+def traces(limit: int = 20, service: RAGService = Depends(get_service)) -> List[Dict]:
+    return service.traces(limit)
+
+
+@app.get("/traces/{trace_id}")
+def trace(trace_id: str, service: RAGService = Depends(get_service)) -> Dict:
+    item = service.trace(trace_id)
+    if not item:
+        raise HTTPException(status_code=404, detail=f"trace not found: {trace_id}")
+    return item
+
+
 @app.post("/ingest", response_model=IngestResponse)
 def ingest_path(path: str = Form(...), service: RAGService = Depends(get_service)) -> IngestResponse:
     target = Path(path)

@@ -49,3 +49,4 @@ class Source(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     sources: List[Source]
+    trace_id: Optional[str] = None

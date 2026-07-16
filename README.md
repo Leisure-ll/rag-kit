@@ -15,6 +15,8 @@
 - 可选 `sentence-transformers` 语义向量模型
 - FastAPI 接口：健康检查、导入、问答、SSE 流式问答
 - Web Console：导入、问答、流式输出、召回分数、文档/chunk 查看
+- Query Trace：每次问答落库，记录 trace_id、latency、Top-K、hybrid/vector/BM25 分数
+- Offline Eval：golden questions 评测 hit@k、MRR、答案关键词覆盖率
 - CLI：命令行导入和问答
 
 ## Docker Demo
@@ -69,6 +71,27 @@ curl.exe http://127.0.0.1:8000/chunks
 curl.exe -X POST http://127.0.0.1:8000/search `
   -H "Content-Type: application/json" `
   -d "{\"question\":\"RAG Kit 的知识库数据分别存在哪里？\",\"top_k\":5}"
+```
+
+查看最近问答 Trace：
+
+```powershell
+curl.exe http://127.0.0.1:8000/traces
+curl.exe http://127.0.0.1:8000/traces/<trace_id>
+```
+
+运行离线评测：
+
+```powershell
+python -m rag_kit.eval eval/golden_qa.jsonl --top-k 5
+```
+
+输出指标包括：
+
+```text
+hit_at_k
+mrr
+answer_keyword_coverage
 ```
 
 普通问答：
@@ -241,6 +264,7 @@ Documents
   -> Prompt Builder
   -> DeepSeek/OpenAI-compatible LLM or local extractive fallback
   -> JSON/SSE response with sources
+  -> Query Trace + Offline Eval
 ```
 
 ## Project Structure
@@ -260,4 +284,6 @@ rag_kit/
   metadata_store.py MySQL metadata storage
   object_store.py   MinIO raw file storage
   elastic_store.py  Elasticsearch BM25/vector storage
+  trace_store.py    query trace persistence
+  eval.py           offline retrieval/answer evaluation
 ```

@@ -1,0 +1,3 @@
+{"question":"RAG Kit 的知识库数据分别存在哪里？","expected_source":"rag_intro.md","expected_keywords":["MinIO","SQLite","Elasticsearch","BM25","向量"]}
+{"question":"RAG Kit 的混合检索怎么计算？","expected_source":"rag_intro.md","expected_keywords":["vector_score","bm25_score","0.65","0.35"]}
+

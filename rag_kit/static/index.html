@@ -58,6 +58,7 @@
           </form>
 
           <h3>Answer</h3>
+          <div id="traceLine" class="traceLine"></div>
           <pre id="answer" class="output"></pre>
 
           <h3>Retrieval Debug</h3>
@@ -75,9 +76,13 @@
           <div id="chunks" class="chunks"></div>
         </section>
       </section>
+
+      <section class="panel tracesPanel">
+        <h2>Recent Traces</h2>
+        <div id="traces" class="table"></div>
+      </section>
     </main>
 
     <script src="/static/app.js"></script>
   </body>
 </html>
-
